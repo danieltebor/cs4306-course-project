@@ -30,7 +30,7 @@ const Node generate_random_start_node() {
     srand(time(NULL));
 
     // Randomly scramble the state. This garuntees the state can be solved.
-    for (unsigned int i = 0; i < 10000; i++) {
+    for (unsigned int i = 0; i < 1000000; i++) {
         // Generate a random move 0-3.
         unsigned int move = rand() % 4;
 

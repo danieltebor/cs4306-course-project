@@ -53,8 +53,9 @@ dkms.conf
 
 # Project files
 .vscode/*
-build/
-bin/
+build/*
+bin/*
+out/*
 
 # Python
 *.pyc

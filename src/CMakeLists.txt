@@ -1,6 +1,8 @@
 file(GLOB SOURCES "*.cpp")
 
-add_library(cs4306-course-project SHARED ${SOURCES})
-set_target_properties(cs4306-course-project PROPERTIES
+include_directories(${CMAKE_SOURCE_DIR}/include)
+
+add_library(${PROJECT_NAME} SHARED ${SOURCES})
+set_target_properties(${PROJECT_NAME} PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/lib"
     SUFFIX ".dll")

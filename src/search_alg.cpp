@@ -1,4 +1,3 @@
-#include <iostream>
 #include <atomic>
 #include <chrono>
 #include <deque>
@@ -102,7 +101,7 @@ SearchResult multithreaded_breadth_first_search(const Node start_node) {
     // Visit every node in the queue. When a node is extended in the loop,
     // the children are enqueued. Once the number of nodes_to_visit becomes
     // >= to the number of available cpu threads, break.
-    while (!nodes_to_visit.size() < std::thread::hardware_concurrency()) {
+    while (nodes_to_visit.size() < std::thread::hardware_concurrency()) {
         const std::shared_ptr<const Node> current_node = nodes_to_visit.front();
         nodes_to_visit.pop_front();
         nodes_visited.insert(current_node);
@@ -166,8 +165,8 @@ SearchResult multithreaded_breadth_first_search(const Node start_node) {
                             // Lock goal_node to ensure thread safety.
                             std::lock_guard<std::mutex> lock(goal_node_mutex);
                             goal_node = current_node;
-                            goal_is_found = true;
                         }
+                        goal_is_found = true;
                     }
 
                     // Extend current node and enqueue children.
@@ -187,7 +186,6 @@ SearchResult multithreaded_breadth_first_search(const Node start_node) {
         }
 
         // Start the threads.
-        std::cout << "num threads: " << threads.size() << std::endl;
         for (auto& thread : threads) {
             thread.join();
         }
