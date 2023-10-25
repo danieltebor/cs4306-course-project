@@ -7,7 +7,7 @@
 typedef struct {
     std::vector<Node> path_to_goal;
     unsigned int num_nodes_visited;
-    long long cpu_time_taken_ms;
+    long long time_taken_ms;
 } SearchResult;
 
 // Frees a SearchResult from memory.

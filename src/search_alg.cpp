@@ -1,8 +1,12 @@
+#include <iostream>
+#include <atomic>
 #include <chrono>
 #include <deque>
 #include <memory>
+#include <mutex>
 #include <queue>
 #include <stack>
+#include <thread>
 #include <unordered_set>
 
 #include "eight_puzzle.hpp"
@@ -13,10 +17,10 @@
 // Each search algorithm populates a SearchResult struct.
 void populate_search_result(SearchResult& result,
                             const unsigned int num_nodes_visited,
-                            const long long cpu_time_taken_ms,
+                            const long long time_taken_ms,
                             const std::shared_ptr<const Node>& goal_node) {
     result.num_nodes_visited = num_nodes_visited;
-    result.cpu_time_taken_ms = cpu_time_taken_ms;
+    result.time_taken_ms = time_taken_ms;
 
     // Check if goal reached.
     if (goal_node == nullptr) {
@@ -96,8 +100,9 @@ SearchResult multithreaded_breadth_first_search(const Node start_node) {
     nodes_to_visit.push_back(std::make_shared<const Node>(start_node));
 
     // Visit every node in the queue. When a node is extended in the loop,
-    // the children are enqueued. This causes the nodes to be visited in a BFS order.
-    while (!nodes_to_visit.empty()) {
+    // the children are enqueued. Once the number of nodes_to_visit becomes
+    // >= to the number of available cpu threads, break.
+    while (!nodes_to_visit.size() < std::thread::hardware_concurrency()) {
         const std::shared_ptr<const Node> current_node = nodes_to_visit.front();
         nodes_to_visit.pop_front();
         nodes_visited.insert(current_node);
@@ -119,6 +124,72 @@ SearchResult multithreaded_breadth_first_search(const Node start_node) {
         // Enqueue children nodes.
         for (const auto& child_node : child_nodes) {
             nodes_to_visit.push_back(child_node);
+        }
+    }
+
+    // If goal has not been found yet, continue to multithreaded section.
+    if (goal_node == nullptr) {
+        // Distrubute nodes_to_visit into multiple queues.
+        std::vector<std::deque<std::shared_ptr<const Node>>> nodes_to_visit_queues(std::thread::hardware_concurrency());
+        for (int i = 0; i < nodes_to_visit.size(); i++) {
+            nodes_to_visit_queues[i % nodes_to_visit_queues.size()].push_back(nodes_to_visit[i]);
+        }
+
+        // Create threads to visit nodes.
+        std::vector<std::thread> threads;
+        threads.reserve(nodes_to_visit_queues.size());
+
+        std::mutex nodes_visited_mutex;
+        std::mutex goal_node_mutex;
+        std::atomic<bool> goal_is_found(false);
+
+        // Create a new thread for each queue of nodes that need to be visited.
+        for (auto& queue : nodes_to_visit_queues) {
+            threads.push_back(std::thread([&queue, &nodes_visited, &goal_node, &nodes_visited_mutex, &goal_node_mutex, &goal_is_found] {
+                std::deque<std::shared_ptr<const Node>> nodes_to_visit(queue);
+
+                // Visit every node in the queue. When a node is extended in the loop,
+                // the children are enqueued. This causes the nodes to be visited in an asyncronous BFS order.
+                while (!nodes_to_visit.empty() && !goal_is_found) {
+                    const std::shared_ptr<const Node> current_node = nodes_to_visit.front();
+                    nodes_to_visit.pop_front();
+
+                    {
+                        // Lock nodes_visited to ensure thread safety.
+                        std::lock_guard<std::mutex> lock(nodes_visited_mutex);
+                        nodes_visited.insert(current_node);
+                    }
+
+                    // Check if current node is the goal state.
+                    if (check_states_are_equivalent(current_node->state, goal_state)) {
+                        {
+                            // Lock goal_node to ensure thread safety.
+                            std::lock_guard<std::mutex> lock(goal_node_mutex);
+                            goal_node = current_node;
+                            goal_is_found = true;
+                        }
+                    }
+
+                    // Extend current node and enqueue children.
+                    // 3rd parameter is false as a heuristic is not used in BFS.
+                    std::vector<std::shared_ptr<const Node>> child_nodes = extend_node(
+                            current_node,
+                            nodes_visited,
+                            false
+                        );
+
+                    // Enqueue children nodes.
+                    for (const auto& child_node : child_nodes) {
+                        nodes_to_visit.push_back(child_node);
+                    }
+                }
+            }));
+        }
+
+        // Start the threads.
+        std::cout << "num threads: " << threads.size() << std::endl;
+        for (auto& thread : threads) {
+            thread.join();
         }
     }
 
