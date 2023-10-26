@@ -8,7 +8,7 @@ cppyy.include('./include/eight_puzzle.hpp')
 cppyy.include('./include/search_alg.hpp')
 lib = cppyy.load_library('./lib/libcs4306-course-project.dll')
 
-num_times_to_run = 100000
+num_times_to_run = 10000
 
 a_star_num_moves_to_goal_avg = 0
 a_star_num_nodes_visited_results = []
@@ -22,6 +22,7 @@ multithreaded_bfs_num_moves_to_goal_avg = 0
 multithreaded_bfs_num_nodes_visited_results = []
 multithreaded_bfs_time_taken_ms_results = []
 
+# Run the algorithms and collect results
 print(f'Running algs {num_times_to_run} times')
 for i in range(0, num_times_to_run):
     print(f'Running {i + 1} of {num_times_to_run} times')
@@ -43,6 +44,7 @@ for i in range(0, num_times_to_run):
     multithreaded_bfs_num_nodes_visited_results.append(multithreaded_bfs_result.num_nodes_visited)
     multithreaded_bfs_time_taken_ms_results.append(multithreaded_bfs_result.time_taken_ms)
 
+# Plot Nodes Visited vs Runtime (ms).
 plt.title('Nodes Visited vs Runtime (ms)')
 plt.xlabel('Nodes Visited')
 plt.ylabel('Runtime (ms)')
@@ -69,6 +71,7 @@ plt.savefig('./out/figs/nodes-visited-vs-runtime.png')
 plt.show()
 
 
+# Plot Avg Number of Moves to Goal.
 plt.title('Avg Number of Moves to Goal (Lower is Better)')
 
 labels = ['A*', 'BFS', 'Multithreaded BFS']
@@ -88,6 +91,7 @@ plt.savefig('./out/figs/avg-moves-to-goal.png')
 plt.show()
 
 
+# Plot Avg Number of Nodes Visited.
 plt.title('Avg Number of Nodes Visited (Lower is Better)')
 
 num_nodes_visited_avgs = [
@@ -104,6 +108,7 @@ plt.savefig('./out/figs/avg-num-nodes-visited.png')
 plt.show()
 
 
+# Plot Avg Runtime (ms).
 plt.title('Avg Runtime (ms) (Lower is Better)')
 
 time_taken_avgs = [
