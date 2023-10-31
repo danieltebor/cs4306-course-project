@@ -24,24 +24,34 @@ configure.bat
 To build and run the project, run the following commands in the project root:
 
 ### Windows
+Build the project
 ```bash
 build.bat
+```
 
-# Run the Eight Puzzle Solver
+Run the Eight Puzzle Solver
+```bash
 eight_puzzle_solver.bat
+```
 
-# Run the Algorithm Analyzer
+Run the Algorithm Analyzer
+```bash
 analyze_search_algs.bat
 ```
 
 ### Linux & MacOS
+Build the project
 ```bash
 ./build.sh
+```
 
-# Run the Eight Puzzle Solver
+Run the Eight Puzzle Solver
+```bash
 ./eight_puzzle_solver.sh
+```
 
-# Run the Algorithm Analyzer
+Run the Algorithm Analyzer
+```bash
 ./analyze_search_algs.sh
 ```
 
