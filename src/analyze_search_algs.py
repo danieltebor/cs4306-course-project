@@ -1,14 +1,21 @@
+import os
+
 import cppyy
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Load libcs4306-course-project.dll
-cppyy.include('./include/eight_puzzle_node.hpp')
-cppyy.include('./include/eight_puzzle.hpp')
-cppyy.include('./include/search_alg.hpp')
-lib = cppyy.load_library('./lib/libcs4306-course-project.dll')
+# Load lib_eight_puzzle_solver.dll
+cppyy.include('./include/eight_puzzle_solver_includes.hpp')
+lib = cppyy.load_library('./lib/lib_eight_puzzle_solver.dll')
 
-num_times_to_run = 10000
+num_times_to_run = 0
+while True:
+    num_times_to_run = input('Enter a number of times to run the algorithms: ')
+    try:
+        num_times_to_run = int(num_times_to_run)
+        break
+    except:
+        print('Invalid input. Please enter an integer.')
 
 a_star_num_moves_to_goal_avg = 0
 a_star_num_nodes_visited_results = []
@@ -43,6 +50,8 @@ for i in range(0, num_times_to_run):
     multithreaded_bfs_num_moves_to_goal_avg += (multithreaded_bfs_result.path_to_goal.size() - multithreaded_bfs_num_moves_to_goal_avg) / (i + 1)
     multithreaded_bfs_num_nodes_visited_results.append(multithreaded_bfs_result.num_nodes_visited)
     multithreaded_bfs_time_taken_ms_results.append(multithreaded_bfs_result.time_taken_ms)
+
+os.makedirs('./out/figs', exist_ok=True)
 
 # Plot Nodes Visited vs Runtime (ms).
 plt.title('Nodes Visited vs Runtime (ms)')

@@ -30,7 +30,7 @@ void populate_search_result(SearchResult& result,
     std::shared_ptr<const Node> current_node = goal_node;
     while (current_node != nullptr) {
         // Copy node into path to goal vector.
-        result.path_to_goal.push_back(*current_node);
+        result.path_to_goal.insert(result.path_to_goal.begin(), *current_node);
         // Move to parent.
         current_node = current_node->parent;
     }
