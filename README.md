@@ -1,5 +1,5 @@
 # cs4306-course-project
-Course Project for Algorithm Analysis at KSU. This project investigates different algorithms to solve the Eight Puzzle Problem.
+Course Project for Algorithm Analysis at KSU. This project investigates different algorithms to solve the Eight Puzzle Problem including parallel and heuristic algorithms.
 
 ## Dependencies
 In order to build the project, you will need to install the following dependencies:
