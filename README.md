@@ -1,7 +1,13 @@
 # cs4306-course-project
 Course Project for Algorithm Analysis at KSU. This project investigates different algorithms to solve the Eight Puzzle Problem including parallel and heuristic algorithms.
 
-## Dependencies
+## Eight Puzzle Problem Analysis
+A detailed analysis of the algorithms used to solve the Eight Puzzle Problem can be found [here](/docs/eight-puzzle-algoritm-analysis.md).
+
+## Project Setup
+This project uses CMake to build the C++ code and Python to run the GUI and requires some setup. The following instructions are for Windows, Linux, and MacOS.
+
+### Dependencies
 In order to build the project, you will need to install the following dependencies:
 - [CMake](https://cmake.org/download/)
 - [C++ Compiler](https://gcc.gnu.org/install/)
@@ -9,21 +15,22 @@ In order to build the project, you will need to install the following dependenci
 - [Python 3 Pip](https://pip.pypa.io/en/stable/installation/)
 - [Python 3 Tkinter](https://tkdocs.com/tutorial/install.html)
 
-## Configure Project
+### Configure Project
 To build the project, required Python packages must be installed and the project must be configured using CMake. To do this run the following command in the project root:
-### Windows
+
+#### Windows
 ```bash
 configure.bat
 ```
-### Linux & MacOS
+#### Linux & MacOS
 ```bash
 ./configure.sh
 ```
 
-## Building and Running
+### Building and Running
 To build and run the project, run the following commands in the project root:
 
-### Windows
+#### Windows
 Build the project
 ```bash
 build.bat
@@ -39,7 +46,7 @@ Run the Algorithm Analyzer
 analyze_search_algs.bat
 ```
 
-### Linux & MacOS
+#### Linux & MacOS
 Build the project
 ```bash
 ./build.sh
@@ -54,9 +61,3 @@ Run the Algorithm Analyzer
 ```bash
 ./analyze_search_algs.sh
 ```
-
-## Results
-![Nodes Visited vs Runtime (ms)](/assets/nodes-visited-vs-runtime.png)
-![Avg Moves to Goal](/assets/avg-moves-to-goal.png)
-![Avg Nodes Visited](/assets/avg-num-nodes-visited.png)
-![Avg Runtime (ms)](/assets/avg-runtime-ms.png)
