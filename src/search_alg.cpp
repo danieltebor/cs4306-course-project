@@ -41,7 +41,7 @@ SearchResult breadth_first_search(const Node start_node) {
     auto start_time = std::chrono::high_resolution_clock::now();
 
     std::deque<std::shared_ptr<const Node>> nodes_to_visit;
-    std::unordered_set<std::shared_ptr<const Node>, NodeHash, NodeEqual> nodes_visited(MAX_NODES / 10, NodeHash(), NodeEqual());
+    std::unordered_set<std::shared_ptr<const Node>, NodeHash, NodeEqual> nodes_visited(MAX_NODES, NodeHash(), NodeEqual());
     std::shared_ptr<const Node> goal_node;
 
     // Enqueue start node.
@@ -92,7 +92,7 @@ SearchResult multithreaded_breadth_first_search(const Node start_node) {
     auto start_time = std::chrono::high_resolution_clock::now();
 
     std::deque<std::shared_ptr<const Node>> nodes_to_visit;
-    std::unordered_set<std::shared_ptr<const Node>, NodeHash, NodeEqual> nodes_visited(MAX_NODES / 10, NodeHash(), NodeEqual());
+    std::unordered_set<std::shared_ptr<const Node>, NodeHash, NodeEqual> nodes_visited(MAX_NODES, NodeHash(), NodeEqual());
     std::shared_ptr<const Node> goal_node;
 
     // Enqueue start node.
@@ -207,7 +207,7 @@ SearchResult a_star_search(const Node start_node) {
     auto start_time = std::chrono::high_resolution_clock::now();
     
     std::priority_queue<std::shared_ptr<const Node>, std::vector<std::shared_ptr<const Node>>, NodeCompare> nodes_to_visit;
-    std::unordered_set<std::shared_ptr<const Node>, NodeHash, NodeEqual> nodes_visited(MAX_NODES / 10, NodeHash(), NodeEqual());
+    std::unordered_set<std::shared_ptr<const Node>, NodeHash, NodeEqual> nodes_visited(MAX_NODES, NodeHash(), NodeEqual());
     std::shared_ptr<const Node> goal_node;
 
     // Enqueue start node.

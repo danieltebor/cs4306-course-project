@@ -7,8 +7,9 @@
 #include "eight_puzzle_node.hpp"
 #include "node_set_functions.hpp"
 
-// The max number of nodes is 9! since the state is a 3x3 grid with 9 tiles.
-#define MAX_NODES 362880
+// The max number of nodes is 9! / 2 since the state is a 3x3 grid with 9 tiles 
+// but only half of the states are reachable given any start node.
+#define MAX_NODES 181440
 
 // Goal state.
 extern const unsigned int goal_state[3][3];
