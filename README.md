@@ -3,6 +3,7 @@ Course Project for Algorithm Analysis at KSU. This project investigates differen
 
 ## Eight Puzzle Problem Analysis
 A detailed analysis of the algorithms used to solve the Eight Puzzle Problem can be found [here](/docs/eight-puzzle-algoritm-analysis.md).
+A PowerPoint presentation of the algorithms used and the results can also be [downloaded](https://github.com/danieltebor/cs4306-course-project/raw/main/docs/cs4306-course-project-presentation.pptx).
 
 ## Project Setup
 This project uses CMake to build the C++ code and Python to run the GUI and requires some setup. The following instructions are for Windows, Linux, and MacOS.
