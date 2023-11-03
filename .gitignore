@@ -1,7 +1,7 @@
 # Project files
 .vscode/*
 build/*
-lib/*
+lib/lib_eight_puzzle_solver.dll
 out/*
 
 # Python

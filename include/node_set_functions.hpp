@@ -16,5 +16,8 @@ struct NodeEqual {
 };
 
 // Search for a node in an unordered set of shared_ptr<Node>.
+template <typename SetType>
 const std::shared_ptr<const Node> node_set_search(const std::shared_ptr<const Node>& node,
-                                                  const std::unordered_set<std::shared_ptr<const Node>, NodeHash, NodeEqual>& nodes_visited);
+                                                  const SetType& nodes_visited);
+
+#include "node_set_functions.tpp"

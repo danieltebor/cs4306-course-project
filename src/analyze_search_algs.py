@@ -103,13 +103,13 @@ plt.show()
 # Plot Avg Number of Moves to Goal.
 plt.title('Avg Number of Moves to Goal (Lower is Better)')
 
-labels = ['A*', 'BFS', 'Multithreaded BFS']
-colors = ['blue', 'red', 'green']
+labels = ['BFS', 'Multithreaded BFS', 'A*']
+colors = ['red', 'green', 'blue']
 x_pos = np.arange(len(labels))
 num_moves_avgs = [
-    np.average(a_star_num_moves_to_goal_results),
     np.average(bfs_num_moves_to_goal_results),
     np.average(multithreaded_bfs_num_moves_to_goal_results),
+    np.average(a_star_num_moves_to_goal_results),
 ]
 
 plt.bar(x_pos, num_moves_avgs, align='center', alpha=0.5, color=colors)
@@ -124,9 +124,9 @@ plt.show()
 plt.title('Avg Number of Nodes Visited (Lower is Better)')
 
 num_nodes_visited_avgs = [
-    np.average(a_star_num_nodes_visited_results),
     np.average(bfs_num_nodes_visited_results),
     np.average(multithreaded_bfs_num_nodes_visited_results),
+    np.average(a_star_num_nodes_visited_results),
 ]
 
 plt.bar(x_pos, num_nodes_visited_avgs, align='center', alpha=0.5, color=colors)
@@ -142,9 +142,9 @@ plt.show()
 plt.title('Avg Runtime (ms) (Lower is Better)')
 
 time_taken_avgs = [
-    np.average(a_star_time_taken_ms_results),
     np.average(bfs_time_taken_ms_results),
     np.average(multithreaded_bfs_time_taken_ms_results),
+    np.average(a_star_time_taken_ms_results),
 ]
 
 plt.bar(x_pos, time_taken_avgs, align='center', alpha=0.5, color=colors)

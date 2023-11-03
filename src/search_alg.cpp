@@ -8,6 +8,8 @@
 #include <thread>
 #include <unordered_set>
 
+#include "tbb/concurrent_unordered_set.h"
+
 #include "eight_puzzle.hpp"
 #include "node_set_functions.hpp"
 #include "priority_queue_functions.hpp"
@@ -92,7 +94,7 @@ SearchResult multithreaded_breadth_first_search(const Node start_node) {
     auto start_time = std::chrono::high_resolution_clock::now();
 
     std::deque<std::shared_ptr<const Node>> nodes_to_visit;
-    std::unordered_set<std::shared_ptr<const Node>, NodeHash, NodeEqual> nodes_visited(MAX_NODES, NodeHash(), NodeEqual());
+    tbb::concurrent_unordered_set<std::shared_ptr<const Node>, NodeHash, NodeEqual> nodes_visited(MAX_NODES, NodeHash(), NodeEqual());
     std::shared_ptr<const Node> goal_node;
 
     // Enqueue start node.
@@ -138,13 +140,12 @@ SearchResult multithreaded_breadth_first_search(const Node start_node) {
         std::vector<std::thread> threads;
         threads.reserve(nodes_to_visit_queues.size());
 
-        std::mutex nodes_visited_mutex;
         std::mutex goal_node_mutex;
         std::atomic<bool> goal_is_found(false);
 
         // Create a new thread for each queue of nodes that need to be visited.
         for (auto& queue : nodes_to_visit_queues) {
-            threads.push_back(std::thread([&queue, &nodes_visited, &goal_node, &nodes_visited_mutex, &goal_node_mutex, &goal_is_found] {
+            threads.push_back(std::thread([&queue, &nodes_visited, &goal_node, &goal_node_mutex, &goal_is_found] {
                 std::deque<std::shared_ptr<const Node>> nodes_to_visit(queue);
 
                 // Visit every node in the queue. When a node is extended in the loop,
@@ -152,12 +153,7 @@ SearchResult multithreaded_breadth_first_search(const Node start_node) {
                 while (!nodes_to_visit.empty() && !goal_is_found) {
                     const std::shared_ptr<const Node> current_node = nodes_to_visit.front();
                     nodes_to_visit.pop_front();
-
-                    {
-                        // Lock nodes_visited to ensure thread safety.
-                        std::lock_guard<std::mutex> lock(nodes_visited_mutex);
-                        nodes_visited.insert(current_node);
-                    }
+                    nodes_visited.insert(current_node);
 
                     // Check if current node is the goal state.
                     if (check_states_are_equivalent(current_node->state, goal_state)) {
