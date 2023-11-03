@@ -1,7 +1,6 @@
 #pragma once
 
 #include <memory>
-#include <unordered_set>
 #include <vector>
 
 #include "eight_puzzle_node.hpp"
@@ -18,6 +17,9 @@ extern const unsigned int goal_state[3][3];
 const Node generate_random_start_node();
 
 // Return all possible children of a node, rejecting nodes with a previously visited state.
+template <typename SetType>
 std::vector<std::shared_ptr<const Node>> extend_node(const std::shared_ptr<const Node>& node,
-                                                     const std::unordered_set<std::shared_ptr<const Node>, NodeHash, NodeEqual>& nodes_visited,
+                                                     const SetType& nodes_visited,
                                                      bool should_use_heuristic);
+
+#include "eight_puzzle.tpp"

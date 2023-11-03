@@ -17,13 +17,3 @@ std::size_t NodeHash::operator()(const std::shared_ptr<const Node>& node) const 
 bool NodeEqual::operator()(const std::shared_ptr<const Node>& node1, const std::shared_ptr<const Node>& node2) const {
     return check_states_are_equivalent(node1->state, node2->state);
 }
-
-// Search for a node in an unordered set of shared_ptr<Node>.
-const std::shared_ptr<const Node> node_set_search(const std::shared_ptr<const Node>& node,
-                                                  const std::unordered_set<std::shared_ptr<const Node>, NodeHash, NodeEqual>& nodes_visited) {
-    auto found_node = nodes_visited.find(node);
-    if (found_node != nodes_visited.end()) {
-        return *found_node;
-    }
-    return nullptr;
-}
