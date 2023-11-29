@@ -13,7 +13,7 @@
 
 In the ever-evolving landscape of computational algorithms, the pursuit of optimizing search processes is a critical endeavor. This project delves into the intricate realm of search algorithm optimization, specifically exploring the potential performance enhancements achieved through parallelizing search algorithms as opposed to the traditional approach of augmenting them with heuristic techniques.
 
-Our primary focus lies in unraveling the comparative advantages and nuances of these two distinct methodologies. By dissecting the search process and introducing parallelization techniques, we aim to uncover the efficiency gains and computational advantages that may be harnessed. Concurrently, we will contrast this approach with the application of heuristics, seeking to determine the most effective strategy for enhancing search algorithms in various contexts.
+Our primary focus lies in unraveling the comparative advantages and nuances of these two distinct methodologies. By dissecting the search process and introducing parallelization techniques, we aim to uncover the efficiency gains and computational advantages that may be harnessed. Moreover, we will contrast this approach with the application of heuristics, seeking to determine the most effective strategy for enhancing search algorithms in various contexts.
 
 This comprehensive report unfolds with a detailed exploration of our aims and objectives, providing a roadmap for our investigation. We pivot to the puzzle problem chosen as the litmus test for algorithmic performance, offering insights into the intricacies of the challenges posed and the overarching goals each algorithm aspires to achieve.
 
@@ -70,9 +70,30 @@ In addition to the team's internal expertise, the project has been enriched by c
 
 The combination of internal expertise and external references has laid a robust foundation for this project. The literature review has not only shaped the methodology but has also provided the team with a well-rounded perspective on the intricacies of parallel computing and algorithm optimization. As we delve deeper into the subsequent sections of this report, the synthesis of literature continues to guide our approach and analysis, ensuring a comprehensive exploration of the chosen search algorithms in the context of parallelization and heuristic enhancement.
 
-
 # Methodologies
-(Your content here)
+To facilitate the evaluation of the breadth-first search, multithreaded breadth-first search, and A* search, these algorithms had to be built from scratch. Each has a similar, but slightly different implementation. However, all are dependent on the mechanics of the 8-puzzle Problem.
+
+## Representing 8-puzzle
+Creating an 8-puzzle in a way in which a search algorithm can use it requires two things: the board to be representable in memory as a node, and for the current node to be extendable to reach the next available moves. Firstly, a node structure was configured. This Node contains a 3x3 grid, representing the state of the 8-puzzle board, with the number 0 representing the empty tile. The node also stores a pointer to its parent (the previous move) so that we can trace from the starting position of the board to the current position. In addition, the node also stores the current depth of the node (which starts at 0), which also describes how many moves it has taken thus far to reach the goal. Finally, the node stores a heuristic value. This value is only populated when A* is being utilized and is used to estimate the best next move.
+
+### Extending the Current Node
+To extend the current node, the first step is to find the position of the empty tile. This can be done by looping through the 3x3 grid until the position of the tile with "0" is found. From there we can try to move in all 4 directions, rejecting any moves that attempt to move outside the bounds of the board. For example, if the empty tile is in the top-right corner, it cannot move up or right since this would be outside the bounds of the grid, so those moves are rejected. Another requirement is that a child node's 3x3 grid cannot be identical to any previously visited tile. To ensure this, every visited node is stored in a hashed-set data structure. This allows for an average lookup time of O(1), making this process extremely efficient.
+
+### Branching Factor
+Since a generated child node cannot be the same as the previous move it is generated from, we can always subtract 1 from the possible moves at any given board state. Using this idea we can calculate a rough estimate of the the branching factor for each node. If the empty tile is in a corner, there is only one possible move it can make. If the empty tile is touching one of the sides, it has 2 possible moves. Finally, if the tile is in the middle it has 3 possible moves. There are 4 corners, 4 sides, and 1 center position, so we can calculate a rough branching factor by summing the possible moves at each position divided by the total number of positions: ((1 * 4) + (2 * 4) + 3) / 9. This results in a rough average branching factor of 1.67.
+
+## Search Algorithm Implementations
+Each of the search algorithms was written in C++ and utilizes the same algorithm for expanding the current node. The goal node was hard coded to the following value:
+| 1 | 2 | 3 |
+| - | - | - |
+| 8 | 0 | 4 |
+| 7 | 6 | 5 |
+
+A random start node was then generated by scrambling the 3x3 grid of the goal node by doing 1000000 random moves.
+
+### Breadth First Search
+Breadth first search explores every possible state systematically. It does this depth-wise, meaning that it will explore all nodes of depth 0, then all nodes of depth 1, etc. until a goal node is found. This garuntees that the shortest possible path (number of moves) is found from the start to the goal. The steps for the algorithm are as follows and use C++ datatypes:
+1. Initialize a
 
 # Results
 (Your content here)
