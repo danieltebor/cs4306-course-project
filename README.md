@@ -2,7 +2,7 @@
 Course Project for Algorithm Analysis at KSU. This project investigates different algorithms to solve the Eight Puzzle Problem including parallel and heuristic algorithms.
 
 ## Eight Puzzle Problem Analysis
-A detailed analysis of the algorithms used to solve the Eight Puzzle Problem can be found [here](/docs/eight-puzzle-algoritm-analysis.md).
+A detailed analysis of the algorithms used to solve the Eight Puzzle Problem can be found [here](/docs/cs4306-project-report.md).
 A PowerPoint presentation of the algorithms used and the results can also be [downloaded](https://github.com/danieltebor/cs4306-course-project/raw/main/docs/cs4306-course-project-presentation.pptx).
 
 ## Project Setup
