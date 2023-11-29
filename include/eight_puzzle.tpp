@@ -72,7 +72,7 @@ template <typename SetType>
 std::vector<std::shared_ptr<const Node>> extend_node(const std::shared_ptr<const Node>& node,
                                                      const SetType& nodes_visited,
                                                      bool should_use_heuristic) {
-                                                            // Find blank tile.
+    // Find blank tile.
     unsigned int blank_x = 0, blank_y = 0;
     bool blank_tile_found = false;
 

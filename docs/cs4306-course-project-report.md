@@ -8,6 +8,14 @@
 
 *Kennesaw State University - College of Computing and Software Engineering*
 
+# Table of Contents
+- [Introduction and Project Overview](#introduction-and-project-overview)
+- [Aims and Objectives](#aims-and-objectives)
+- [Brief Literature Review](#brief-literature-review)
+- [Methodologies](#methodologies)
+- [Results](#results)
+- [Conclusion](#conclusion)
+- [Appendix](#appendix)
 
 # Introduction and Project Overview
 
@@ -193,4 +201,782 @@ In conclusion, our exploration into parallel search algorithms and heuristic-bas
 
 In the evolving landscape of search algorithms, our project underscores the importance of understanding the specific priorities and requirements of a problem before selecting an appropriate solution strategy. A* for speed, BFS for optimal moves, and Multi-Threaded BFS for a harmonious blend of both — our project contributes to the nuanced understanding of these algorithms, paving the way for informed decision-making in problem-solving scenarios. As we conclude this report, we acknowledge the dynamic nature of algorithmic research and anticipate that future endeavors will continue to refine and expand upon the foundations laid in this project.
 
+# Appendix
 
+The full project source code can be found on [GitHub](https://github.com/danieltebor/cs4306-course-project). However, the relevant source code is included here for convenience.
+
+## Contents
+- [Node Definition, Creation, and Expansion](#node-definition-creation-and-expansion)
+    - [Node Structure & Goal State](#node-structure--goal-state)
+    - [Generate Random Start Node](#generate-random-start-node)
+    - [Expand Node](#expand-node)
+- [Search Algorithms](#search-algorithms)
+    - [BFS](#bfs)
+    - [MTBFS](#mtbfs)
+    - [A*](#a-search)
+- [Analysis Code](#analysis-code)
+    - [Search Result Metadata](#search-result-metadata)
+    - [Analysis Script](#analysis-script)
+- [Interactive 8-puzzle Solver](#interactive-8-puzzle-solver)
+
+## Node Definition, Creation, and Expansion
+### Node Structure & Goal State
+```cpp
+typedef struct Node Node;
+
+struct Node {
+    std::shared_ptr<const Node> parent = nullptr; // Pointer to parent node
+    unsigned int state[3][3]; // Board state
+    unsigned int depth; // Depth of node in search tree
+    unsigned int heuristic; // Heuristic value of node
+};
+
+const unsigned int goal_state[3][3] = {
+    {1, 2, 3},
+    {8, 0, 4},
+    {7, 6, 5}
+};
+```
+
+### Generate Random Start Node
+```cpp
+const Node generate_random_start_node() {
+    Node node;
+    
+    // Copy goal state into node.
+    unsigned int blank_x, blank_y;
+    for (int y = 0; y < 3; y++) {
+        for (int x = 0; x < 3; x++) {
+            node.state[y][x] = goal_state[y][x];
+            if (node.state[y][x] == 0) {
+                blank_x = x;
+                blank_y = y;
+            }
+        }
+    }
+
+    srand(time(NULL));
+
+    // Randomly scramble the state. This garuntees the state can be solved.
+    for (unsigned int i = 0; i < 1000000; i++) {
+        // Generate a random move 0-3.
+        unsigned int move = rand() % 4;
+
+        if (move == 0 && blank_x > 0) {
+            // Swap blank tile with tile to the left of it.
+            unsigned int left_tile = node.state[blank_y][blank_x - 1];
+            node.state[blank_y][blank_x - 1] = 0;
+            node.state[blank_y][blank_x] = left_tile;
+            blank_x--;
+        }
+        else if (move == 1 && blank_y < 2) {
+            // Swap blank tile with tile below it.
+            unsigned int below_tile = node.state[blank_y + 1][blank_x];
+            node.state[blank_y + 1][blank_x] = 0;
+            node.state[blank_y][blank_x] = below_tile;
+            blank_y++;
+        }
+        else if (move == 2 && blank_x < 2) {
+            // Swap blank tile with tile to the right of it.
+            unsigned int right_tile = node.state[blank_y][blank_x + 1];
+            node.state[blank_y][blank_x + 1] = 0;
+            node.state[blank_y][blank_x] = right_tile;
+            blank_x++;
+        }
+        else if (move == 3 && blank_y > 0) {
+            // Swap blank tile with tile above it.
+            unsigned int above_tile = node.state[blank_y - 1][blank_x];
+            node.state[blank_y - 1][blank_x] = 0;
+            node.state[blank_y][blank_x] = above_tile;
+            blank_y--;
+        }
+        else {
+            i--;
+        }
+    }
+
+    // Populate rest of node.
+    node.depth = 0;
+    node.heuristic = std::numeric_limits<unsigned int>::max();
+
+    return (const Node) node;
+}
+```
+
+### Expand Node
+```cpp
+template <typename SetType>
+std::vector<std::shared_ptr<const Node>> extend_node(const std::shared_ptr<const Node>& node,
+                                                     const SetType& nodes_visited,
+                                                     bool should_use_heuristic) {
+    // Find blank tile.
+    unsigned int blank_x = 0, blank_y = 0;
+    bool blank_tile_found = false;
+
+    for (unsigned int y = 0; y < 3; y++) {
+        for (unsigned int x = 0; x < 3; x++) {
+            if (node->state[y][x] == 0) {
+                blank_x = x;
+                blank_y = y;
+                blank_tile_found = true;
+                break;
+            }
+        }
+
+        if (blank_tile_found) {
+            break;
+        }
+    }
+
+    std::vector<std::shared_ptr<const Node>> child_nodes;
+    child_nodes.reserve(4);
+
+    for (unsigned int i = 0; i < 4; i++) {
+        // Dynamically allocate using shared_ptrs so that node persists outside of function scope.
+        const std::shared_ptr<Node> child_node = std::make_shared<Node>();
+        // Copy state into child_node's state.
+        for (unsigned int y = 0; y < 3; y++) {
+            for (unsigned int x = 0; x < 3; x++) {
+                child_node->state[y][x] = node->state[y][x];
+            }
+        }
+        
+        if (i == 0 && blank_x > 0) {
+            // Swap blank tile with tile to the left of it.
+            unsigned int left_tile = child_node->state[blank_y][blank_x - 1];
+            child_node->state[blank_y][blank_x - 1] = 0;
+            child_node->state[blank_y][blank_x] = left_tile;
+        }
+        else if (i == 1 && blank_y < 2) {
+            // Swap blank tile with tile below it.
+            unsigned int below_tile = child_node->state[blank_y + 1][blank_x];
+            child_node->state[blank_y + 1][blank_x] = 0;
+            child_node->state[blank_y][blank_x] = below_tile;
+        }
+        else if (i == 2 && blank_x < 2) {
+            // Swap blank tile with tile to the right of it.
+            unsigned int right_tile = child_node->state[blank_y][blank_x + 1];
+            child_node->state[blank_y][blank_x + 1] = 0;
+            child_node->state[blank_y][blank_x] = right_tile;
+        }
+        else if (i == 3 && blank_y > 0) {
+            // Swap blank tile with tile above it.
+            unsigned int above_tile = child_node->state[blank_y - 1][blank_x];
+            child_node->state[blank_y - 1][blank_x] = 0;
+            child_node->state[blank_y][blank_x] = above_tile;
+        }
+        else {
+            continue;
+        }
+
+        // Populate blank fields in child_node.
+        child_node->parent = node;
+        child_node->depth = node->depth + 1;
+        child_node->heuristic = should_use_heuristic
+            ? calc_nilsson_sequence_score(*child_node) + calc_summed_manhatten_distances(*child_node)
+            : 0;
+
+        // Add child_node to child_nodes if it's state does not already exist.
+        if (node_set_search(child_node, nodes_visited) == NULL) {
+            child_nodes.emplace_back(std::const_pointer_cast<const Node>(child_node));
+        }
+    }
+
+    return child_nodes;
+}
+```
+
+## Search Algorithms
+### BFS
+```cpp
+SearchResult breadth_first_search(const Node start_node) {
+    // Record start time for algorithm execution.
+    auto start_time = std::chrono::high_resolution_clock::now();
+
+    std::deque<std::shared_ptr<const Node>> nodes_to_visit;
+    std::unordered_set<std::shared_ptr<const Node>, NodeHash, NodeEqual> nodes_visited(MAX_NODES, NodeHash(), NodeEqual());
+    std::shared_ptr<const Node> goal_node;
+
+    // Enqueue start node.
+    nodes_to_visit.push_back(std::make_shared<const Node>(start_node));
+    
+    // Visit every node in the queue. When a node is extended in the loop,
+    // the children are enqueued. This causes the nodes to be visited in a BFS order.
+    while (!nodes_to_visit.empty()) {
+        const std::shared_ptr<const Node> current_node = nodes_to_visit.front();
+        nodes_to_visit.pop_front();
+        
+        nodes_visited.insert(current_node);
+
+        // Check if current node is the goal state.
+        if (check_states_are_equivalent(current_node->state, goal_state)) {
+            goal_node = current_node;
+            break;
+        }
+        
+        // Extend current node and enqueue children.
+        // 3rd parameter is false as a heuristic is not used in BFS.
+        std::vector<std::shared_ptr<const Node>> child_nodes = extend_node(
+                current_node,
+                nodes_visited,
+                false
+            );
+        
+        // Enqueue children nodes.
+        for (const auto& child_node : child_nodes) {
+            nodes_to_visit.push_back(child_node);
+        }
+    }
+
+    // Record end time for algorithm execution.
+    auto end_time = std::chrono::high_resolution_clock::now();
+    // Calculate time taken in milliseconds.
+    auto cpu_time_taken_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
+
+    // Fill out fields in the SearchResult struct.
+    
+    SearchResult result;
+    populate_search_result(result, nodes_visited.size(), cpu_time_taken_ms, goal_node);
+    return result;
+}
+```
+
+### MTBFS
+```cpp
+SearchResult multithreaded_breadth_first_search(const Node start_node) {
+    // Record start time for algorithm execution.
+    auto start_time = std::chrono::high_resolution_clock::now();
+
+    std::deque<std::shared_ptr<const Node>> nodes_to_visit;
+    tbb::concurrent_unordered_set<std::shared_ptr<const Node>, NodeHash, NodeEqual> nodes_visited(MAX_NODES, NodeHash(), NodeEqual());
+    std::shared_ptr<const Node> goal_node;
+
+    // Enqueue start node.
+    nodes_to_visit.push_back(std::make_shared<const Node>(start_node));
+
+    // Visit every node in the queue. When a node is extended in the loop,
+    // the children are enqueued. Once the number of nodes_to_visit becomes
+    // >= to the number of available cpu threads, break.
+    while (nodes_to_visit.size() < std::thread::hardware_concurrency()) {
+        const std::shared_ptr<const Node> current_node = nodes_to_visit.front();
+        nodes_to_visit.pop_front();
+        nodes_visited.insert(current_node);
+
+        // Check if current node is the goal state.
+        if (check_states_are_equivalent(current_node->state, goal_state)) {
+            goal_node = current_node;
+            break;
+        }
+        
+        // Extend current node and enqueue children.
+        // 3rd parameter is false as a heuristic is not used in BFS.
+        std::vector<std::shared_ptr<const Node>> child_nodes = extend_node(
+                current_node,
+                nodes_visited,
+                false
+            );
+
+        // Enqueue children nodes.
+        for (const auto& child_node : child_nodes) {
+            nodes_to_visit.push_back(child_node);
+        }
+    }
+
+    // If goal has not been found yet, continue to multithreaded section.
+    if (goal_node == nullptr) {
+        // Distrubute nodes_to_visit into multiple queues.
+        std::vector<std::deque<std::shared_ptr<const Node>>> nodes_to_visit_queues(std::thread::hardware_concurrency());
+        for (int i = 0; i < nodes_to_visit.size(); i++) {
+            nodes_to_visit_queues[i % nodes_to_visit_queues.size()].push_back(nodes_to_visit[i]);
+        }
+
+        // Create threads to visit nodes.
+        std::vector<std::thread> threads;
+        threads.reserve(nodes_to_visit_queues.size());
+
+        std::mutex goal_node_mutex;
+        std::atomic<bool> goal_is_found(false);
+
+        // Create a new thread for each queue of nodes that need to be visited.
+        for (auto& queue : nodes_to_visit_queues) {
+            threads.push_back(std::thread([&queue, &nodes_visited, &goal_node, &goal_node_mutex, &goal_is_found] {
+                std::deque<std::shared_ptr<const Node>> nodes_to_visit(queue);
+
+                // Visit every node in the queue. When a node is extended in the loop,
+                // the children are enqueued. This causes the nodes to be visited in an asyncronous BFS order.
+                while (!nodes_to_visit.empty() && !goal_is_found) {
+                    const std::shared_ptr<const Node> current_node = nodes_to_visit.front();
+                    nodes_to_visit.pop_front();
+                    nodes_visited.insert(current_node);
+
+                    // Check if current node is the goal state.
+                    if (check_states_are_equivalent(current_node->state, goal_state)) {
+                        {
+                            // Lock goal_node to ensure thread safety.
+                            std::lock_guard<std::mutex> lock(goal_node_mutex);
+                            goal_node = current_node;
+                        }
+                        goal_is_found = true;
+                    }
+
+                    // Extend current node and enqueue children.
+                    // 3rd parameter is false as a heuristic is not used in BFS.
+                    std::vector<std::shared_ptr<const Node>> child_nodes = extend_node(
+                            current_node,
+                            nodes_visited,
+                            false
+                        );
+
+                    // Enqueue children nodes.
+                    for (const auto& child_node : child_nodes) {
+                        nodes_to_visit.push_back(child_node);
+                    }
+                }
+            }));
+        }
+
+        // Start the threads.
+        for (auto& thread : threads) {
+            thread.join();
+        }
+    }
+
+    // Record end time for algorithm execution.
+    auto end_time = std::chrono::high_resolution_clock::now();
+    // Calculate time taken in milliseconds.
+    auto cpu_time_taken_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
+
+    // Fill out fields in the SearchResult struct.
+    SearchResult result;
+    populate_search_result(result, nodes_visited.size(), cpu_time_taken_ms, goal_node);
+    return result;
+}
+```
+
+### A*
+```cpp
+SearchResult a_star_search(const Node start_node) {
+    // Record start time for algorithm execution.
+    auto start_time = std::chrono::high_resolution_clock::now();
+    
+    std::priority_queue<std::shared_ptr<const Node>, std::vector<std::shared_ptr<const Node>>, NodeCompare> nodes_to_visit;
+    std::unordered_set<std::shared_ptr<const Node>, NodeHash, NodeEqual> nodes_visited(MAX_NODES, NodeHash(), NodeEqual());
+    std::shared_ptr<const Node> goal_node;
+
+    // Enqueue start node.
+    nodes_to_visit.push(std::make_shared<const Node>(start_node));
+    
+    // Visit every node in the priority queue. When a node is extended in the loop,
+    // the children are enqued and internally sorted so that those with the lowest
+    // depth + heuristic value come first. This causes the nodes to be visited in a A* order.
+    while (!nodes_to_visit.empty()) {
+        const std::shared_ptr<const Node> current_node = nodes_to_visit.top();
+        nodes_to_visit.pop();
+        nodes_visited.insert(current_node);
+
+        // Check if current node is the goal state.
+        if (check_states_are_equivalent(current_node->state, goal_state)) {
+            goal_node = current_node;
+            break;
+        }
+        
+        // Extend current node and enqueue children.
+        // 3rd parameter is true as a heuristic is used in A*.
+        std::vector<std::shared_ptr<const Node>> child_nodes = extend_node(
+                current_node,
+                nodes_visited,
+                true // Use heuristics.
+            );
+
+        // Enqueue children nodes.
+        for (const auto& child_node : child_nodes) {
+            nodes_to_visit.push(child_node);
+        }
+    }
+
+    // Record end time for algorithm execution.
+    auto end_time = std::chrono::high_resolution_clock::now();
+    // Calculate time taken in milliseconds.
+    auto cpu_time_taken_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
+
+    // Fill out fields in the SearchResult struct.
+    SearchResult result;
+    populate_search_result(result, nodes_visited.size(), cpu_time_taken_ms, goal_node);
+    return result;
+}
+```
+
+#### A* Heuristics
+```cpp
+// Add Nilsson's sequence score heuristic
+inline unsigned int calc_nilsson_sequence_score(const Node node) {
+    const unsigned int x_clockwise_order[8] = {0, 1, 2, 2, 2, 1, 0, 0};
+    const unsigned int y_clockwise_order[8] = {0, 0, 0, 1, 2, 2, 2, 0};
+    unsigned int score = 0;
+
+    // Add one to score if center not 0.
+    if (node.state[1][1] != 0) {
+        score++;
+    }
+
+    // Build state clockwise.
+    unsigned int goal_state_clockwise[8];
+    unsigned int node_state_clockwise[8];
+
+    for (unsigned int i = 0; i < 8; i++) {
+        goal_state_clockwise[i] = goal_state[y_clockwise_order[i]][x_clockwise_order[i]];
+        node_state_clockwise[i] = node.state[y_clockwise_order[i]][x_clockwise_order[i]];
+    }
+
+    // Check if each tile clockwise matches 
+    for (unsigned int i = 0; i < 7; i++) {
+        if (node_state_clockwise[i] != goal_state_clockwise[i]) {
+            score += 2;
+        }
+    }
+
+    return score * 3;
+}
+
+// Calculates a heuristic value by finding the 
+// Manhatten distance of a tile from its position in the goal state.
+inline unsigned int calc_manhatten_distance(unsigned int tile_value, unsigned int x, unsigned int y) {
+    unsigned int goal_x, goal_y;
+
+    // Find goal position of tile.
+    for (unsigned int y = 0; y < 3; y++) {
+        for (unsigned int x = 0; x < 3; x++) {
+            if (goal_state[y][x] == tile_value) {
+                goal_x = x;
+                goal_y = y;
+            }
+        }
+    }
+
+    // Calculate manhatten distance.
+    unsigned int x_diff = (goal_x > x) ? goal_x - x : x - goal_x;
+    unsigned int y_diff = (goal_y > y) ? goal_y - y : y - goal_y;
+    return x_diff + y_diff;
+}
+
+// Calculates a heuristic value by calculating the sum of
+// the Manhatten distances of all tiles in the state compared to the goal.
+inline unsigned int calc_summed_manhatten_distances(const Node node) {
+    unsigned int total_distances = 0;
+
+    // Traverse state.
+    for (unsigned int y = 0; y < 3; y++) {
+        for (unsigned int x = 0; x < 3; x++) {
+            unsigned int tile_value = node.state[y][x];
+            if (tile_value != 0) {
+                total_distances += calc_manhatten_distance(tile_value, x, y);
+            }
+        }
+    }
+
+    return total_distances;
+}
+```
+
+## Analysis Code
+### Search Result Metadata
+```cpp
+typedef struct {
+    std::vector<Node> path_to_goal;
+    unsigned int num_nodes_visited;
+    long long time_taken_ms;
+} SearchResult;
+
+void populate_search_result(SearchResult& result,
+                            const unsigned int num_nodes_visited,
+                            const long long time_taken_ms,
+                            const std::shared_ptr<const Node>& goal_node) {
+    result.num_nodes_visited = num_nodes_visited;
+    result.time_taken_ms = time_taken_ms;
+
+    // Check if goal reached.
+    if (goal_node == nullptr) {
+        return;
+    }
+
+    // Trace back from goal node to start node to get the path.
+    std::shared_ptr<const Node> current_node = goal_node;
+    while (current_node != nullptr) {
+        // Copy node into path to goal vector.
+        result.path_to_goal.insert(result.path_to_goal.begin(), *current_node);
+        // Move to parent.
+        current_node = current_node->parent;
+    }
+}
+```
+
+### Analysis Script
+```python
+# Load lib_eight_puzzle_solver.dll
+cppyy.include('./include/eight_puzzle_solver_includes.hpp')
+lib = cppyy.load_library('./lib/lib_eight_puzzle_solver.dll')
+
+num_times_to_run = 0
+while True:
+    num_times_to_run = input('Enter a number of times to run the algorithms: ')
+    try:
+        num_times_to_run = int(num_times_to_run)
+        break
+    except:
+        print('Invalid input. Please enter an integer.')
+
+a_star_num_moves_to_goal_results = []
+a_star_num_nodes_visited_results = []
+a_star_time_taken_ms_results = []
+
+bfs_num_moves_to_goal_results = []
+bfs_num_nodes_visited_results = []
+bfs_time_taken_ms_results = []
+
+multithreaded_bfs_num_moves_to_goal_results= []
+multithreaded_bfs_num_nodes_visited_results = []
+multithreaded_bfs_time_taken_ms_results = []
+
+# Run the algorithms and collect results
+print(f'Running algs {num_times_to_run} times')
+for i in range(0, num_times_to_run):
+    print(f'Running {i + 1} of {num_times_to_run} times')
+    
+    node = cppyy.gbl.generate_random_start_node()
+    
+    a_star_result = cppyy.gbl.a_star_search(node)
+    a_star_num_moves_to_goal_results.append(a_star_result.path_to_goal.size())
+    a_star_num_nodes_visited_results.append(a_star_result.num_nodes_visited)
+    a_star_time_taken_ms_results.append(a_star_result.time_taken_ms)
+
+    bfs_result = cppyy.gbl.breadth_first_search(node)
+    bfs_num_moves_to_goal_results.append(bfs_result.path_to_goal.size())
+    bfs_num_nodes_visited_results.append(bfs_result.num_nodes_visited)
+    bfs_time_taken_ms_results.append(bfs_result.time_taken_ms)
+
+    multithreaded_bfs_result = cppyy.gbl.multithreaded_breadth_first_search(node)
+    multithreaded_bfs_num_moves_to_goal_results.append(multithreaded_bfs_result.path_to_goal.size())
+    multithreaded_bfs_num_nodes_visited_results.append(multithreaded_bfs_result.num_nodes_visited)
+    multithreaded_bfs_time_taken_ms_results.append(multithreaded_bfs_result.time_taken_ms)
+
+os.makedirs('./out/figs', exist_ok=True)
+
+# Plot Nodes Visited vs Runtime (ms).
+plt.title('Nodes Visited vs Runtime (ms)')
+plt.xlabel('Nodes Visited')
+plt.ylabel('Runtime (ms)')
+
+plt.plot(multithreaded_bfs_num_nodes_visited_results, multithreaded_bfs_time_taken_ms_results, 's', label='Multithreaded BFS', color='green', markersize=3, alpha=0.33)
+plt.plot(bfs_num_nodes_visited_results, bfs_time_taken_ms_results, 'o', label='BFS', color='red', markersize=3, alpha=0.33)
+plt.plot(a_star_num_nodes_visited_results, a_star_time_taken_ms_results, '^', label='A*', color='blue', markersize=3, alpha=0.33)
+
+plt.legend()
+
+plt.savefig('./out/figs/nodes-visited-vs-runtime.png')
+plt.show()
+
+
+# Plot Moves to Goal vs Nodes Visited.
+plt.title('Moves to Goal vs Nodes Visited')
+plt.xlabel('Moves to Goal')
+plt.ylabel('Nodes Visited')
+
+plt.plot(multithreaded_bfs_num_moves_to_goal_results, multithreaded_bfs_num_nodes_visited_results, 's', label='Multithreaded BFS', color='green', markersize=3, alpha=0.33)
+plt.plot(bfs_num_moves_to_goal_results, bfs_num_nodes_visited_results, 'o', label='BFS', color='red', markersize=3, alpha=0.33)
+plt.plot(a_star_num_moves_to_goal_results, a_star_num_nodes_visited_results, '^', label='A*', color='blue', markersize=3, alpha=0.33)
+
+plt.legend()
+
+plt.subplots_adjust(left=0.15)
+
+plt.savefig('./out/figs/moves-to-goal-vs-nodes-visited.png')
+plt.show()
+
+
+# Plot Moves to Goal vs Runtime (ms).
+plt.title('Moves to Goal vs Runtime (ms)')
+plt.xlabel('Moves to Goal')
+plt.ylabel('Runtime (ms)')
+
+plt.plot(multithreaded_bfs_num_moves_to_goal_results, multithreaded_bfs_time_taken_ms_results, 's', label='Multithreaded BFS', color='green', markersize=3, alpha=0.33)
+plt.plot(bfs_num_moves_to_goal_results, bfs_time_taken_ms_results, 'o', label='BFS', color='red', markersize=3, alpha=0.33)
+plt.plot(a_star_num_moves_to_goal_results, a_star_time_taken_ms_results, '^', label='A*', color='blue', markersize=3, alpha=0.33)
+
+plt.legend()
+
+plt.savefig('./out/figs/moves-to-goal-vs-runtime.png')
+plt.show()
+
+
+# Plot Avg Number of Moves to Goal.
+plt.title('Avg Number of Moves to Goal (Lower is Better)')
+
+labels = ['BFS', 'Multithreaded BFS', 'A*']
+colors = ['red', 'green', 'blue']
+x_pos = np.arange(len(labels))
+num_moves_avgs = [
+    np.average(bfs_num_moves_to_goal_results),
+    np.average(multithreaded_bfs_num_moves_to_goal_results),
+    np.average(a_star_num_moves_to_goal_results),
+]
+
+plt.bar(x_pos, num_moves_avgs, align='center', alpha=0.5, color=colors)
+plt.xticks(x_pos, labels)
+plt.ylabel('Moves to Goal')
+
+plt.savefig('./out/figs/avg-moves-to-goal.png')
+plt.show()
+
+
+# Plot Avg Number of Nodes Visited.
+plt.title('Avg Number of Nodes Visited (Lower is Better)')
+
+num_nodes_visited_avgs = [
+    np.average(bfs_num_nodes_visited_results),
+    np.average(multithreaded_bfs_num_nodes_visited_results),
+    np.average(a_star_num_nodes_visited_results),
+]
+
+plt.bar(x_pos, num_nodes_visited_avgs, align='center', alpha=0.5, color=colors)
+plt.xticks(x_pos, labels)
+plt.ylabel('Nodes Visited')
+plt.subplots_adjust(left=0.15)
+
+plt.savefig('./out/figs/avg-num-nodes-visited.png')
+plt.show()
+
+
+# Plot Avg Runtime (ms).
+plt.title('Avg Runtime (ms) (Lower is Better)')
+
+time_taken_avgs = [
+    np.average(bfs_time_taken_ms_results),
+    np.average(multithreaded_bfs_time_taken_ms_results),
+    np.average(a_star_time_taken_ms_results),
+]
+
+plt.bar(x_pos, time_taken_avgs, align='center', alpha=0.5, color=colors)
+plt.xticks(x_pos, labels)
+plt.ylabel('Runtime (ms)')
+
+plt.savefig('./out/figs/avg-runtime.png')
+plt.show()
+```
+
+## Interactive 8-Puzzle Solver
+```python
+# Load lib_eight_puzzle_solver.dll
+cppyy.include('./include/eight_puzzle_solver_includes.hpp')
+lib = cppyy.load_library('./lib/lib_eight_puzzle_solver.dll')
+
+# Create the main window
+window = tk.Tk()
+window.title('Eight Puzzle Solver')
+
+# Create a dropdown menu to select algorithm.
+selected_algorithm = tk.StringVar()
+selected_algorithm.set('A*')
+algorithm_selector = ttk.Combobox(window, textvariable=selected_algorithm)
+algorithm_selector['values'] = ('A*', 'BFS', 'Multithreaded BFS')
+algorithm_selector.grid(column=0, row=0)
+
+# Create result labels with default text
+moves_to_goal_label = tk.Label(window, text='Moves to Goal: -')
+moves_to_goal_label.grid(column=0, row=1, sticky=tk.W)
+nodes_visited_label = tk.Label(window, text='Nodes Visited: -')
+nodes_visited_label.grid(column=0, row=2, sticky=tk.W)
+runtime_ms_label = tk.Label(window, text='Runtime (MS): -')
+runtime_ms_label.grid(column=0, row=3, sticky=tk.W)
+
+# Create a 3x3 grid of labels with empty strings
+state_table_frame = tk.Frame(window)
+state_table_frame.grid(column=0, row=5, columnspan=5, sticky=tk.W)
+
+state_labels = [[tk.Label(state_table_frame, text=' ', relief='solid', width=4, height=2) for _ in range(3)] for _ in range(3)]
+for y in range(3):
+    for x in range(3):
+        state_labels[y][x].grid(column=x + 1, row=y)
+
+def set_state_labels(state: cppyy.gbl.std.array[cppyy.gbl.std.array[int, 3], 3]):
+    global state_labels
+
+    for y in range(3):
+        for x in range(3):
+            state_labels[y][x].config(text=str(state[y][x]))
+
+# Create previous and next buttons
+current_result = None
+current_state_idx = 0
+
+def traverse_previous_move():
+    global current_result
+    global current_state_idx
+
+    if current_state_idx == current_result.path_to_goal.size() - 1:
+        next_button.config(state=tk.NORMAL)
+
+    current_state_idx -= 1
+    if current_state_idx == 0:
+        previous_button.config(state=tk.DISABLED)
+
+    set_state_labels(state=current_result.path_to_goal[current_state_idx].state)
+
+def traverse_next_move():
+    global current_result
+    global current_state_idx
+
+    if current_state_idx == 0:
+        previous_button.config(state=tk.NORMAL)
+
+    current_state_idx += 1
+    if current_state_idx == current_result.path_to_goal.size() - 1:
+        next_button.config(state=tk.DISABLED)
+
+    set_state_labels(state=current_result.path_to_goal[current_state_idx].state)
+
+previous_button = tk.Button(state_table_frame, text='←', command=traverse_previous_move, state=tk.DISABLED)
+previous_button.grid(column=0, row=0, rowspan=3)
+next_button = tk.Button(state_table_frame, text='→', command=traverse_next_move, state=tk.DISABLED)
+next_button.grid(column=4, row=0, rowspan=3)
+
+# Create a button to run the selected algorithm
+def run_algorithm() -> cppyy.gbl.SearchResult:
+    global current_result
+    global current_state_idx
+
+    # Lock buttons
+    run_button.config(state=tk.DISABLED)
+    previous_button.config(state=tk.DISABLED)
+    next_button.config(state=tk.DISABLED)
+
+    node = cppyy.gbl.generate_random_start_node()
+
+    result = None
+    algorithm = selected_algorithm.get()
+    if algorithm == 'A*':
+        result = cppyy.gbl.a_star_search(node)
+    elif algorithm == 'BFS':
+        result = cppyy.gbl.breadth_first_search(node)
+    elif algorithm == 'Multithreaded BFS':
+        result = cppyy.gbl.multithreaded_breadth_first_search(node)
+
+    # Update the labels with the result
+    moves_to_goal_label.config(text=f'Moves to Goal: {result.path_to_goal.size()}')
+    nodes_visited_label.config(text=f'Nodes Visited: {result.num_nodes_visited}')
+    runtime_ms_label.config(text=f'Runtime (MS): {result.time_taken_ms}')
+
+    # Update the state labels
+    current_result = result
+    current_state_idx = 0
+    set_state_labels(state=result.path_to_goal[0].state)
+
+    # Unlock run button
+    run_button.config(state=tk.NORMAL)
+    next_button.config(state=tk.NORMAL)
+
+run_button = tk.Button(window, text='Run', command=run_algorithm)
+run_button.grid(column=1, row=0)
+
+# Start the main loop
+window.mainloop()
+```
