@@ -80,8 +80,3 @@ The combination of internal expertise and external references has laid a robust 
 # Conclusion
 (Your content here)
 
-# References
-(Your content here)
-
-# Appendix
-(Codes and raw data, if applicable)
