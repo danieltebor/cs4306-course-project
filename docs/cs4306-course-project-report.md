@@ -205,7 +205,6 @@ In the evolving landscape of search algorithms, our project underscores the impo
 
 The full project source code can be found on [GitHub](https://github.com/danieltebor/cs4306-course-project). However, the relevant source code is included here for convenience.
 
-## Contents
 - [Node Definition, Creation, and Expansion](#node-definition-creation-and-expansion)
     - [Node Structure & Goal State](#node-structure--goal-state)
     - [Generate Random Start Node](#generate-random-start-node)
