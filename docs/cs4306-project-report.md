@@ -78,5 +78,15 @@ The combination of internal expertise and external references has laid a robust 
 (Your content here)
 
 # Conclusion
-(Your content here)
+
+In conclusion, our exploration into parallel search algorithms and heuristic-based approaches for solving the 8-puzzle problem has provided valuable insights into the trade-offs and advantages associated with different strategies.
+
+**A * for Speed:** A* emerges as the star performer when speed is the top priority. Its ability to swiftly navigate through the solution space makes it the preferred choice for scenarios where finding a quick resolution to the 8-puzzle problem is crucial. The efficiency of A* shines through, showcasing its prowess in rapidly converging towards solutions.
+
+**BFS for Optimal Moves:** On the other hand, if the primary objective is to achieve optimal moves, Breadth-First Search (BFS) takes the lead. Its systematic exploration of the solution space ensures that the shortest path to the solution is identified. When the focus shifts from speed to the precision of moves, BFS stands out as the superior option.
+
+**Multi-Threaded BFS:** However, our project delves deeper into the realm of optimization, introducing the concept of Multi-Threaded BFS. This innovative approach not only preserves the optimal moves of BFS but also introduces a parallel processing element that significantly enhances runtime efficiency. The multi-threaded BFS proves to be the optimal choice when the goal is to minimize the number of moves while simultaneously outperforming the traditional BFS in terms of runtime.
+
+In the evolving landscape of search algorithms, our project underscores the importance of understanding the specific priorities and requirements of a problem before selecting an appropriate solution strategy. A* for speed, BFS for optimal moves, and Multi-Threaded BFS for a harmonious blend of both — our project contributes to the nuanced understanding of these algorithms, paving the way for informed decision-making in problem-solving scenarios. As we conclude this report, we acknowledge the dynamic nature of algorithmic research and anticipate that future endeavors will continue to refine and expand upon the foundations laid in this project.
+
 
